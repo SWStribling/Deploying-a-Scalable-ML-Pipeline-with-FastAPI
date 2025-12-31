@@ -1,5 +1,7 @@
 Working in a command line environment is recommended for ease of use with git and dvc. If on Windows, WSL1 or 2 is recommended.
 
+Github repo: https://github.com/SWStribling/Deploying-a-Scalable-ML-Pipeline-with-FastAPI
+
 # Environment Set up (pip or conda)
 * Option 1: use the supplied file `environment.yml` to create a new environment with conda
 * Option 2: use the supplied file `requirements.txt` to create a new environment with pip
@@ -27,3 +29,4 @@ Working in a command line environment is recommended for ease of use with git an
 *  Create a RESTful API using FastAPI this must implement:
     * GET on the root giving a welcome message.
     * POST that does model inference.
+
