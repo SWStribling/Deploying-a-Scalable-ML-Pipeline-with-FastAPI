@@ -43,7 +43,7 @@ for train_index, test_index in kf.split(data):
     test = data.iloc[test_index]
 
 # TODO: use the process_data function provided to process the data.
-    X_train, y_train, encoder, lb = process_data(
+    X_train, y_train, encoder, lb, scaler = process_data(
         # your code here
         # use the train dataset 
         # use training=True
@@ -54,13 +54,14 @@ for train_index, test_index in kf.split(data):
         training=True
         )
 
-    X_test, y_test, _, _ = process_data(
+    X_test, y_test, _, _, _ = process_data(
         test,
         categorical_features=cat_features,
         label="salary",
         training=False,
         encoder=encoder,
         lb=lb,
+        scaler=scaler
     )
 
     # TODO: use the train_model function to train the model on the training dataset
@@ -100,8 +101,30 @@ for col in cat_features:
             label="salary",
             encoder=encoder,
             lb=lb,
-            model=model
+            model=model,
+            scaler=scaler
         )
         with open("slice_output.txt", "a") as f:
             print(f"{col}: {slicevalue}, Count: {count:,}", file=f)
             print(f"Precision: {p:.4f} | Recall: {r:.4f} | F1: {fb:.4f}", file=f)
+
+# Retrain on full dataset for deployment
+X_full, y_full, encoder, lb, scaler = process_data(
+    data,
+    categorical_features=cat_features,
+    label="salary",
+    training=True
+)
+
+final_model = train_model(X_full, y_full)
+
+# Save final artifacts
+model_dir = os.path.join(project_path, "model")
+os.makedirs(model_dir, exist_ok=True)
+
+save_model(final_model, os.path.join(model_dir, "model.pkl"))
+save_model(encoder, os.path.join(model_dir, "encoder.pkl"))
+save_model(lb, os.path.join(model_dir, "lb.pkl"))
+save_model(scaler, os.path.join(model_dir, "scaler.pkl"))
+
+print("Final model and preprocessing artifacts saved for deployment.")

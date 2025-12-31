@@ -1,9 +1,29 @@
 import numpy as np
-from sklearn.preprocessing import LabelBinarizer, OneHotEncoder
+import pandas as pd
+from sklearn.preprocessing import LabelBinarizer, OneHotEncoder, StandardScaler
 
+# Education mapping dictionary
+edu_map = {
+    "Preschool": 1,
+    "1st-4th": 2,
+    "5th-6th": 3,
+    "7th-8th": 4,
+    "9th": 5,
+    "10th": 6,
+    "11th": 7,
+    "12th": 8,
+    "HS-grad": 9,
+    "Some-college": 10,
+    "Assoc-acdm": 11,
+    "Assoc-voc": 12,
+    "Bachelors": 13,
+    "Masters": 14,
+    "Doctorate": 15,
+    "Prof-school": 16
+}
 
 def process_data(
-    X, categorical_features=[], label=None, training=True, encoder=None, lb=None
+    X, categorical_features=[], label=None, training=True, encoder=None, lb=None, scaler=None
 ):
     """ Process the data used in the machine learning pipeline.
 
@@ -43,32 +63,35 @@ def process_data(
         Trained LabelBinarizer if training is True, otherwise returns the binarizer
         passed in.
     """
+    # Apply ordinal mapping to education
+    if "education" in X.columns:
+        X = X.copy()
+        X["education"] = X["education"].map(edu_map)
 
-    if label is not None:
-        y = X[label]
-        X = X.drop([label], axis=1)
-    else:
-        y = np.array([])
+    # Separate categorical and numeric features
+    X_cat = X[categorical_features]
+    drop_cols = categorical_features + ([label] if label else [])
+    X_num = X.drop(columns=drop_cols)
 
-    X_categorical = X[categorical_features].values
-    X_continuous = X.drop(*[categorical_features], axis=1)
 
-    if training is True:
+    if training:
         encoder = OneHotEncoder(sparse_output=False, handle_unknown="ignore")
         lb = LabelBinarizer()
-        
-        X_categorical = encoder.fit_transform(X_categorical)
-        y = lb.fit_transform(y.values).ravel()
-    else:
-        X_categorical = encoder.transform(X_categorical)
-        try:
-            y = lb.transform(y.values).ravel()
-        # Catch the case where y is None because we're doing inference.
-        except AttributeError:
-            pass
+        scaler = StandardScaler()
 
-    X = np.concatenate([X_continuous, X_categorical], axis=1)
-    return X, y, encoder, lb
+        X_cat_enc = encoder.fit_transform(X_cat)
+        X_num_scaled = scaler.fit_transform(X_num)
+
+        y = lb.fit_transform(X[label]) if label else None
+    else:
+        X_cat_enc = encoder.transform(X_cat)
+        X_num_scaled = scaler.transform(X_num)
+        y = lb.transform(X[label]) if label else None
+
+    # Concatenate numeric + categorical features
+    X_out = np.concatenate([X_num_scaled, X_cat_enc], axis=1)
+
+    return X_out, y, encoder, lb, scaler
 
 def apply_label(inference):
     """ Convert the binary label in a single inference sample into string output."""
