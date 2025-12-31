@@ -67,7 +67,7 @@ async def post_inference(data: Data):
         "sex",
         "native-country",
     ]
-    data_processed, _, _, _ = process_data(
+    data_processed, _, _, _, _ = process_data(
         # your code here
         # use data as data input
         # use training = False
